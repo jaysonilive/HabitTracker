@@ -6,7 +6,7 @@ import { format, startOfMonth, getDaysInMonth } from 'date-fns';
 import { 
   LogOut, ChevronLeft, ChevronRight, Plus, Check, 
   LayoutDashboard, ListTodo, Moon, BookOpen, 
-  TrendingUp, Target, User, Calendar, Trash2, Quote
+  TrendingUp, Target, User, Calendar, Trash2, Quote, Menu, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -37,6 +37,7 @@ export default function HabitTracker() {
   const [currentDate, setCurrentDate] = useState(startOfMonth(new Date()));
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const monthYear = format(currentDate, 'yyyy-MM');
   const daysInMonth = getDaysInMonth(currentDate);
@@ -215,7 +216,7 @@ export default function HabitTracker() {
             </div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/30 transform transition-transform hover:scale-[1.02]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-blue-100 font-medium text-lg">Completion Rate</h3>
@@ -294,7 +295,7 @@ export default function HabitTracker() {
                 <div className="min-w-[max-content] pb-4">
                   <div className="flex border-b border-gray-200 bg-gray-50/80">
                     <div className="w-12 flex-shrink-0 border-r border-gray-200 p-4 text-center text-gray-500 font-semibold text-xs uppercase tracking-wider sticky left-0 bg-gray-50/80 z-20">#</div>
-                    <div className="w-64 flex-shrink-0 border-r border-gray-200 p-4 text-left text-gray-700 font-semibold text-xs uppercase tracking-wider sticky left-12 bg-gray-50/80 z-20">Habit / Rules</div>
+                    <div className="w-48 md:w-64 flex-shrink-0 border-r border-gray-200 p-4 text-left text-gray-700 font-semibold text-xs uppercase tracking-wider sticky left-12 bg-gray-50/80 z-20">Habit / Rules</div>
                     {Array.from({ length: daysInMonth }, (_, i) => (
                       <div key={i} className="w-10 flex-shrink-0 border-r last:border-r-0 border-gray-200 p-4 text-center text-gray-500 font-semibold text-xs">
                         {i + 1}
@@ -308,7 +309,7 @@ export default function HabitTracker() {
                         <div className="w-12 flex-shrink-0 border-r border-gray-100 p-3 flex items-center justify-center text-gray-400 font-medium text-sm sticky left-0 bg-white group-hover:bg-gray-50/50 z-10 transition-colors">
                           {index + 1}
                         </div>
-                        <div className="w-64 flex-shrink-0 border-r border-gray-100 p-0 relative sticky left-12 bg-white group-hover:bg-gray-50/50 z-10 flex items-center transition-colors">
+                        <div className="w-48 md:w-64 flex-shrink-0 border-r border-gray-100 p-0 relative sticky left-12 bg-white group-hover:bg-gray-50/50 z-10 flex items-center transition-colors">
                           <input
                             type="text"
                             value={habit}
@@ -350,7 +351,7 @@ export default function HabitTracker() {
                   </div>
 
                   <div className="flex bg-gray-50/80 border-t-2 border-gray-200">
-                    <div className="w-[19rem] flex-shrink-0 border-r border-gray-200 p-4 text-right text-gray-700 font-bold text-sm uppercase tracking-wider sticky left-0 bg-gray-50/80 z-20">
+                    <div className="w-[15rem] md:w-[19rem] flex-shrink-0 border-r border-gray-200 p-4 text-right text-gray-700 font-bold text-sm uppercase tracking-wider sticky left-0 bg-gray-50/80 z-20">
                       Total Points
                     </div>
                     {Array.from({ length: daysInMonth }, (_, dayIndex) => {
@@ -480,60 +481,31 @@ export default function HabitTracker() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="h-full max-w-5xl mx-auto flex flex-col"
+            className="h-full max-w-4xl mx-auto flex flex-col"
           >
-            <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 flex-1 flex flex-col overflow-hidden relative">
-              {/* Decorative Header */}
-              <div className="h-48 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 relative p-8 flex flex-col justify-end overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-                <div className="relative z-10 flex items-end justify-between">
-                  <div>
-                    <h3 className="text-3xl font-extrabold text-white tracking-tight mb-2">Monthly Reflection</h3>
-                    <p className="text-blue-200 font-medium flex items-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>{format(currentDate, 'MMMM yyyy')}</span>
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium border border-white/20">
-                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                    <span>Auto-saving</span>
-                  </div>
+            <div className="bg-[#fdfbf7] rounded-2xl shadow-sm border border-gray-200 flex-1 flex flex-col overflow-hidden relative">
+              {/* Journal Header */}
+              <div className="px-6 md:px-10 py-6 border-b border-gray-200 flex items-center justify-between bg-white/60 backdrop-blur-sm">
+                <div>
+                  <h3 className="text-2xl md:text-3xl font-serif font-bold text-gray-800">Monthly Journal</h3>
+                  <p className="text-gray-500 text-sm font-medium mt-1 uppercase tracking-widest">{format(currentDate, 'MMMM yyyy')}</p>
+                </div>
+                <div className="flex items-center space-x-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border border-green-100">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="hidden sm:inline">Auto-saved</span>
+                  <span className="sm:hidden">Saved</span>
                 </div>
               </div>
               
               {/* Editor Area */}
-              <div className="flex-1 flex flex-col md:flex-row bg-gray-50/30">
-                {/* Prompts Sidebar */}
-                <div className="w-full md:w-72 border-r border-gray-100 p-6 bg-white/50 hidden md:block">
-                  <div className="flex items-center space-x-2 text-blue-600 mb-6">
-                    <Quote className="w-5 h-5" />
-                    <h4 className="font-bold text-sm uppercase tracking-wider">Prompts</h4>
-                  </div>
-                  <div className="space-y-4">
-                    {[
-                      "What went well this month?",
-                      "What habits were hardest to keep?",
-                      "How did your sleep affect your mood?",
-                      "What is your main goal for next month?"
-                    ].map((prompt, i) => (
-                      <div key={i} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm text-gray-600 hover:border-blue-200 hover:bg-blue-50/50 transition-colors cursor-default">
-                        {prompt}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Text Area */}
-                <div className="flex-1 p-8 md:p-12 flex flex-col">
-                  <textarea
-                    value={dashboard?.notes || ''}
-                    onChange={handleNotesChange}
-                    placeholder="Start writing your thoughts here... Use this space to reflect on your journey, note down obstacles, or celebrate your wins."
-                    className="flex-1 w-full bg-transparent border-none focus:ring-0 outline-none resize-none text-gray-800 text-lg leading-relaxed placeholder-gray-300 font-serif"
-                    style={{ lineHeight: '1.8' }}
-                  />
-                </div>
+              <div className="flex-1 p-6 md:p-10 flex flex-col">
+                <textarea
+                  value={dashboard?.notes || ''}
+                  onChange={handleNotesChange}
+                  placeholder="Write your thoughts, reflections, or goals for this month..."
+                  className="flex-1 w-full bg-transparent border-none focus:ring-0 outline-none resize-none text-gray-800 text-lg md:text-xl leading-relaxed placeholder-gray-400 font-serif"
+                  style={{ lineHeight: '2' }}
+                />
               </div>
             </div>
           </motion.div>
@@ -546,23 +518,45 @@ export default function HabitTracker() {
   return (
     <div className="flex h-screen bg-[#f8f9fa] overflow-hidden font-sans text-gray-900 selection:bg-blue-200">
       
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-72 bg-slate-950 text-white flex flex-col flex-shrink-0 shadow-2xl z-20 relative overflow-hidden">
+      <aside className={cn(
+        "fixed md:static inset-y-0 left-0 w-72 bg-slate-950 text-white flex flex-col flex-shrink-0 shadow-2xl z-50 transition-transform duration-300 ease-in-out",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}>
         {/* Subtle background glow */}
         <div className="absolute top-0 left-0 w-full h-64 bg-blue-900/20 blur-[100px] pointer-events-none"></div>
         
-        <div className="p-8 flex items-center space-x-4 relative z-10">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 border border-white/10">
-            <Target className="w-6 h-6 text-white" />
+        <div className="p-8 flex items-center justify-between relative z-10">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 border border-white/10">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Tracker</span>
           </div>
-          <span className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Tracker</span>
+          <button 
+            className="md:hidden text-gray-400 hover:text-white transition-colors"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
         
         <nav className="flex-1 px-4 space-y-2 mt-4 relative z-10">
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setIsMobileMenuOpen(false);
+              }}
               className={cn(
                 "w-full flex items-center space-x-4 px-5 py-4 rounded-xl transition-all duration-300 relative group",
                 activeTab === tab.id 
@@ -601,30 +595,38 @@ export default function HabitTracker() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
         {/* Header */}
-        <header className="h-24 bg-white border-b border-gray-100 flex items-center justify-between px-10 flex-shrink-0 z-10">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {tabs.find(t => t.id === activeTab)?.label}
-          </h1>
+        <header className="h-20 md:h-24 bg-white border-b border-gray-100 flex items-center justify-between px-4 md:px-10 flex-shrink-0 z-10">
+          <div className="flex items-center space-x-4">
+            <button 
+              className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 hidden sm:block">
+              {tabs.find(t => t.id === activeTab)?.label}
+            </h1>
+          </div>
           
-          <div className="flex items-center space-x-8">
-            <div className="flex items-center bg-gray-50 rounded-xl p-1.5 border border-gray-200 shadow-sm">
-              <button onClick={prevMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all">
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
+          <div className="flex items-center space-x-2 md:space-x-8">
+            <div className="flex items-center bg-gray-50 rounded-xl p-1 md:p-1.5 border border-gray-200 shadow-sm">
+              <button onClick={prevMonth} className="p-1.5 md:p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all">
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </button>
-              <div className="flex items-center space-x-3 px-6 min-w-[200px] justify-center">
-                <Calendar className="w-4 h-4 text-blue-600" />
-                <span className="font-bold text-gray-900 text-sm tracking-wide uppercase">
-                  {format(currentDate, 'MMMM yyyy')}
+              <div className="flex items-center space-x-2 md:space-x-3 px-2 md:px-6 min-w-[140px] md:min-w-[200px] justify-center">
+                <Calendar className="w-3 h-3 md:w-4 md:h-4 text-blue-600 hidden sm:block" />
+                <span className="font-bold text-gray-900 text-xs md:text-sm tracking-wide uppercase">
+                  {format(currentDate, 'MMM yyyy')}
                 </span>
               </div>
-              <button onClick={nextMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all">
-                <ChevronRight className="w-5 h-5 text-gray-600" />
+              <button onClick={nextMonth} className="p-1.5 md:p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all">
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </button>
             </div>
             
             <button 
               onClick={() => auth.signOut()}
-              className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+              className="p-2 md:p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
               title="Sign out"
             >
               <LogOut className="w-5 h-5" />
@@ -633,7 +635,7 @@ export default function HabitTracker() {
         </header>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar relative">
+        <div className="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar relative">
           <AnimatePresence mode="wait">
             {renderContent()}
           </AnimatePresence>
