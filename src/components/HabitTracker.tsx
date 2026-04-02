@@ -6,7 +6,7 @@ import { format, startOfMonth, getDaysInMonth } from 'date-fns';
 import { 
   LogOut, ChevronLeft, ChevronRight, Plus, Check, 
   LayoutDashboard, ListTodo, Moon, BookOpen, 
-  TrendingUp, Target, User, Calendar
+  TrendingUp, Target, User, Calendar, Trash2, Quote
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -91,6 +91,14 @@ export default function HabitTracker() {
   const addHabit = () => {
     if (!dashboard) return;
     updateDashboard({ habits: [...(dashboard.habits || defaultHabits), ''] });
+  };
+
+  const removeHabit = (indexToRemove: number) => {
+    if (!dashboard) return;
+    const currentHabits = dashboard.habits || defaultHabits;
+    if (currentHabits.length <= 1) return; // Keep at least one
+    const newHabits = currentHabits.filter((_, index) => index !== indexToRemove);
+    updateDashboard({ habits: newHabits });
   };
 
   const toggleCompletion = (habitIndex: number, day: number) => {
@@ -285,8 +293,8 @@ export default function HabitTracker() {
               <div className="overflow-x-auto custom-scrollbar">
                 <div className="min-w-[max-content] pb-4">
                   <div className="flex border-b border-gray-200 bg-gray-50/80">
-                    <div className="w-12 flex-shrink-0 border-r border-gray-200 p-4 text-center text-gray-500 font-semibold text-xs uppercase tracking-wider">#</div>
-                    <div className="w-64 flex-shrink-0 border-r border-gray-200 p-4 text-left text-gray-700 font-semibold text-xs uppercase tracking-wider">Habit / Rules</div>
+                    <div className="w-12 flex-shrink-0 border-r border-gray-200 p-4 text-center text-gray-500 font-semibold text-xs uppercase tracking-wider sticky left-0 bg-gray-50/80 z-20">#</div>
+                    <div className="w-64 flex-shrink-0 border-r border-gray-200 p-4 text-left text-gray-700 font-semibold text-xs uppercase tracking-wider sticky left-12 bg-gray-50/80 z-20">Habit / Rules</div>
                     {Array.from({ length: daysInMonth }, (_, i) => (
                       <div key={i} className="w-10 flex-shrink-0 border-r last:border-r-0 border-gray-200 p-4 text-center text-gray-500 font-semibold text-xs">
                         {i + 1}
@@ -297,10 +305,10 @@ export default function HabitTracker() {
                   <div className="flex flex-col">
                     {habitsList.map((habit, index) => (
                       <div key={index} className="flex border-b border-gray-100 hover:bg-gray-50/50 transition-colors group">
-                        <div className="w-12 flex-shrink-0 border-r border-gray-100 p-3 flex items-center justify-center text-gray-400 font-medium text-sm">
+                        <div className="w-12 flex-shrink-0 border-r border-gray-100 p-3 flex items-center justify-center text-gray-400 font-medium text-sm sticky left-0 bg-white group-hover:bg-gray-50/50 z-10 transition-colors">
                           {index + 1}
                         </div>
-                        <div className="w-64 flex-shrink-0 border-r border-gray-100 p-0 relative">
+                        <div className="w-64 flex-shrink-0 border-r border-gray-100 p-0 relative sticky left-12 bg-white group-hover:bg-gray-50/50 z-10 flex items-center transition-colors">
                           <input
                             type="text"
                             value={habit}
@@ -308,6 +316,13 @@ export default function HabitTracker() {
                             placeholder={`Enter habit ${index + 1}...`}
                             className="w-full h-full p-4 bg-transparent border-none focus:ring-2 focus:ring-inset focus:ring-blue-500 outline-none text-sm font-medium text-gray-700 placeholder-gray-300"
                           />
+                          <button
+                            onClick={() => removeHabit(index)}
+                            className="absolute right-2 opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                            title="Delete habit"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                         {Array.from({ length: daysInMonth }, (_, dayIndex) => {
                           const isCompleted = dashboard?.completions[`${index}-${dayIndex + 1}`];
@@ -335,7 +350,7 @@ export default function HabitTracker() {
                   </div>
 
                   <div className="flex bg-gray-50/80 border-t-2 border-gray-200">
-                    <div className="w-[19rem] flex-shrink-0 border-r border-gray-200 p-4 text-right text-gray-700 font-bold text-sm uppercase tracking-wider">
+                    <div className="w-[19rem] flex-shrink-0 border-r border-gray-200 p-4 text-right text-gray-700 font-bold text-sm uppercase tracking-wider sticky left-0 bg-gray-50/80 z-20">
                       Total Points
                     </div>
                     {Array.from({ length: daysInMonth }, (_, dayIndex) => {
@@ -465,25 +480,61 @@ export default function HabitTracker() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="h-full max-w-4xl mx-auto flex flex-col"
+            className="h-full max-w-5xl mx-auto flex flex-col"
           >
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex-1 flex flex-col">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Monthly Journal</h3>
-                  <p className="text-gray-500 mt-1">Reflect on your progress and set your intentions.</p>
-                </div>
-                <div className="flex items-center space-x-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-sm font-medium">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span>Auto-saved</span>
+            <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 flex-1 flex flex-col overflow-hidden relative">
+              {/* Decorative Header */}
+              <div className="h-48 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 relative p-8 flex flex-col justify-end overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+                <div className="relative z-10 flex items-end justify-between">
+                  <div>
+                    <h3 className="text-3xl font-extrabold text-white tracking-tight mb-2">Monthly Reflection</h3>
+                    <p className="text-blue-200 font-medium flex items-center space-x-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>{format(currentDate, 'MMMM yyyy')}</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium border border-white/20">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    <span>Auto-saving</span>
+                  </div>
                 </div>
               </div>
-              <textarea
-                value={dashboard?.notes || ''}
-                onChange={handleNotesChange}
-                placeholder="Write down your thoughts, reflections, or goals for this month..."
-                className="flex-1 w-full p-6 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none resize-none text-gray-700 text-lg leading-relaxed transition-all placeholder-gray-400"
-              />
+              
+              {/* Editor Area */}
+              <div className="flex-1 flex flex-col md:flex-row bg-gray-50/30">
+                {/* Prompts Sidebar */}
+                <div className="w-full md:w-72 border-r border-gray-100 p-6 bg-white/50 hidden md:block">
+                  <div className="flex items-center space-x-2 text-blue-600 mb-6">
+                    <Quote className="w-5 h-5" />
+                    <h4 className="font-bold text-sm uppercase tracking-wider">Prompts</h4>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      "What went well this month?",
+                      "What habits were hardest to keep?",
+                      "How did your sleep affect your mood?",
+                      "What is your main goal for next month?"
+                    ].map((prompt, i) => (
+                      <div key={i} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm text-gray-600 hover:border-blue-200 hover:bg-blue-50/50 transition-colors cursor-default">
+                        {prompt}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Text Area */}
+                <div className="flex-1 p-8 md:p-12 flex flex-col">
+                  <textarea
+                    value={dashboard?.notes || ''}
+                    onChange={handleNotesChange}
+                    placeholder="Start writing your thoughts here... Use this space to reflect on your journey, note down obstacles, or celebrate your wins."
+                    className="flex-1 w-full bg-transparent border-none focus:ring-0 outline-none resize-none text-gray-800 text-lg leading-relaxed placeholder-gray-300 font-serif"
+                    style={{ lineHeight: '1.8' }}
+                  />
+                </div>
+              </div>
             </div>
           </motion.div>
         );
@@ -496,33 +547,44 @@ export default function HabitTracker() {
     <div className="flex h-screen bg-[#f8f9fa] overflow-hidden font-sans text-gray-900 selection:bg-blue-200">
       
       {/* Sidebar */}
-      <aside className="w-72 bg-gray-900 text-white flex flex-col flex-shrink-0 shadow-2xl z-20">
-        <div className="p-8 flex items-center space-x-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+      <aside className="w-72 bg-slate-950 text-white flex flex-col flex-shrink-0 shadow-2xl z-20 relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 left-0 w-full h-64 bg-blue-900/20 blur-[100px] pointer-events-none"></div>
+        
+        <div className="p-8 flex items-center space-x-4 relative z-10">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 border border-white/10">
             <Target className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-extrabold tracking-tight">Tracker</span>
+          <span className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Tracker</span>
         </div>
         
-        <nav className="flex-1 px-4 space-y-2 mt-4">
+        <nav className="flex-1 px-4 space-y-2 mt-4 relative z-10">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "w-full flex items-center space-x-4 px-5 py-4 rounded-xl transition-all duration-200",
+                "w-full flex items-center space-x-4 px-5 py-4 rounded-xl transition-all duration-300 relative group",
                 activeTab === tab.id 
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-900/20" 
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  ? "bg-white/10 text-white shadow-lg border border-white/10 backdrop-blur-md" 
+                  : "text-gray-400 hover:bg-white/5 hover:text-white border border-transparent"
               )}
             >
-              <tab.icon className={cn("w-5 h-5", activeTab === tab.id ? "text-white" : "text-gray-400")} />
+              {activeTab === tab.id && (
+                <motion.div 
+                  layoutId="activeTabIndicator"
+                  className="absolute left-0 w-1 h-8 bg-blue-500 rounded-r-full"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <tab.icon className={cn("w-5 h-5 transition-colors", activeTab === tab.id ? "text-blue-400" : "text-gray-400 group-hover:text-gray-300")} />
               <span className="font-semibold text-sm tracking-wide">{tab.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="p-6 border-t border-gray-800 bg-gray-900/50">
+        <div className="p-6 border-t border-white/10 bg-black/20 relative z-10 backdrop-blur-xl">
           <div className="flex items-center space-x-4">
             <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-700">
               {user?.photoURL ? <img src={user.photoURL} alt="Profile" /> : <User className="w-5 h-5 text-gray-400" />}
