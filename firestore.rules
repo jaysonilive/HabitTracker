@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidDashboard(data) {
+      return data.uid is string &&
+             data.monthYear is string &&
+             data.monthYear.matches("^\\d{4}-\\d{2}$") &&
+             (!('habits' in data) || data.habits is list) &&
+             (!('completions' in data) || data.completions is map) &&
+             (!('sleep' in data) || data.sleep is map) &&
+             (!('notes' in data) || data.notes is string);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId}/dashboards/{monthYear} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && 
+                       hasRequiredFields(['uid', 'monthYear']) && 
+                       uidUnchanged() &&
+                       isValidDashboard(request.resource.data);
+      allow update: if isOwner(userId) && 
+                       uidNotModified() &&
+                       isValidDashboard(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+  }
+}

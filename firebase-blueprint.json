@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "Dashboard": {
+      "title": "Dashboard",
+      "description": "A monthly habit tracker dashboard for a user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user ID of the dashboard owner."
+        },
+        "monthYear": {
+          "type": "string",
+          "description": "The month and year of the dashboard, formatted as YYYY-MM."
+        },
+        "habits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The list of habit names (up to 12)."
+        },
+        "completions": {
+          "type": "object",
+          "description": "Map of habit completions. Key is '{habitIndex}-{day}', value is boolean."
+        },
+        "sleep": {
+          "type": "object",
+          "description": "Map of sleep data. Key is '{day}', value is string (e.g., '8hrs')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "User notes for the month."
+        }
+      },
+      "required": ["uid", "monthYear"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/dashboards/{monthYear}": {
+      "schema": {
+        "$ref": "#/entities/Dashboard"
+      },
+      "description": "Stores the user's monthly habit tracking dashboards."
+    }
+  }
+}
