@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, deleteField } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { cn } from '../lib/utils';
 import { format, startOfMonth, getDaysInMonth } from 'date-fns';
@@ -141,7 +141,7 @@ export default function HabitTracker() {
     if (!dashboard) return;
     const newSleep = { ...dashboard.sleep };
     if (newSleep[day] === hours) {
-      delete newSleep[day];
+      newSleep[day] = deleteField() as any as string;
     } else {
       newSleep[day] = hours;
     }
