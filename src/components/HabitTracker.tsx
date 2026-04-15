@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { cn } from '../lib/utils';
 import { format, startOfMonth, getDaysInMonth } from 'date-fns';
@@ -9,6 +9,7 @@ import {
   TrendingUp, Target, User, Calendar, Trash2, Menu, X, Activity, Sparkles, Flame
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import LoadingScreen from './LoadingScreen';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 
 const INITIAL_NUM_HABITS = 5;
@@ -42,6 +43,9 @@ export default function HabitTracker() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [localNotes, setLocalNotes] = useState('');
+  const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isEditingNotesRef = useRef(false);
 
   const monthYear = format(currentDate, 'yyyy-MM');
   const daysInMonth = getDaysInMonth(currentDate);
@@ -52,37 +56,56 @@ export default function HabitTracker() {
 
     const docRef = doc(db, `users/${user.uid}/dashboards/${monthYear}`);
     
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setDashboard(snapshot.data() as DashboardData);
-      } else {
-        const initialData: DashboardData = {
-          uid: user.uid,
-          monthYear,
-          habits: defaultHabits,
-          completions: {},
-          sleep: {},
-          notes: ''
-        };
-        setDoc(docRef, initialData).catch(console.error);
-        setDashboard(initialData);
+    const unsubscribe = onSnapshot(
+      docRef,
+      { includeMetadataChanges: true },
+      (snapshot) => {
+        if (snapshot.exists()) {
+          // Document found — always show it (from cache or server)
+          setDashboard(snapshot.data() as DashboardData);
+          setLoading(false);
+        } else if (!snapshot.metadata.fromCache) {
+          // SERVER confirmed the document doesn't exist — safe to create it
+          // Never create from a cache-only snapshot (cache could be stale/empty on new device)
+          const initialData: DashboardData = {
+            uid: user.uid,
+            monthYear,
+            habits: defaultHabits,
+            completions: {},
+            sleep: {},
+            notes: ''
+          };
+          setDoc(docRef, initialData).catch(console.error);
+          setDashboard(initialData);
+          setLoading(false);
+        }
+        // else: cache says doc doesn't exist but we haven't heard from the server yet — keep loading
+      },
+      (error) => {
+        console.error("Error fetching dashboard:", error);
+        setLoading(false);
       }
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching dashboard:", error);
-      setLoading(false);
-    });
+    );
 
     return () => unsubscribe();
   }, [user, monthYear]);
+
+  // Sync localNotes from Firestore only when user is not actively typing
+  useEffect(() => {
+    if (!isEditingNotesRef.current) {
+      setLocalNotes(dashboard?.notes || '');
+    }
+  }, [dashboard?.notes]);
 
   const updateDashboard = useCallback(async (updates: Partial<DashboardData>) => {
     if (!user || !dashboard) return;
     const docRef = doc(db, `users/${user.uid}/dashboards/${monthYear}`);
     try {
-      await updateDoc(docRef, updates);
+      // setDoc with merge:true = safe upsert. Works even if doc doesn't exist.
+      // Unlike updateDoc, this NEVER fails due to missing document.
+      await setDoc(docRef, updates, { merge: true });
     } catch (error) {
-      console.error("Error updating dashboard:", error);
+      console.error('Error updating dashboard:', error);
     }
   }, [user, dashboard, monthYear]);
 
@@ -126,7 +149,14 @@ export default function HabitTracker() {
   };
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    updateDashboard({ notes: e.target.value });
+    const value = e.target.value;
+    setLocalNotes(value);
+    isEditingNotesRef.current = true;
+    if (notesTimerRef.current) clearTimeout(notesTimerRef.current);
+    notesTimerRef.current = setTimeout(() => {
+      updateDashboard({ notes: value });
+      isEditingNotesRef.current = false;
+    }, 1000);
   };
 
   const prevMonth = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
@@ -145,27 +175,15 @@ export default function HabitTracker() {
     return points.join(' ');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"
-        />
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen />;
 
   const habitsList = dashboard?.habits || defaultHabits;
   
   // Calculate Overview Stats
   const totalPossible = habitsList.length * daysInMonth;
   let totalCompleted = 0;
-  let currentStreak = 0;
-  let maxStreak = 0;
-  let tempStreak = 0;
 
+  // Build per-day completions array
   const completionsPerDay = Array.from({ length: daysInMonth }, (_, i) => {
     let dayTotal = 0;
     for (let h = 0; h < habitsList.length; h++) {
@@ -174,20 +192,47 @@ export default function HabitTracker() {
         totalCompleted++;
       }
     }
-    
-    // Calculate streak based on if ANY habit was completed that day
-    if (dayTotal > 0) {
-      tempStreak++;
-      if (tempStreak > maxStreak) maxStreak = tempStreak;
-    } else {
-      tempStreak = 0;
-    }
-
     return { day: i + 1, completions: dayTotal };
   });
 
-  // Current streak is the streak ending on the most recently completed day
-  currentStreak = tempStreak;
+  // --- Streak Logic ---
+  const today = new Date();
+  const isCurrentMonth = format(today, 'yyyy-MM') === monthYear;
+  // Only count up to today for the current month
+  const lastRelevantDay = isCurrentMonth
+    ? Math.min(today.getDate(), daysInMonth)
+    : daysInMonth;
+
+  // Best streak: longest consecutive run of days with any completion
+  let maxStreak = 0;
+  let runningStreak = 0;
+  for (let i = 0; i < lastRelevantDay; i++) {
+    if (completionsPerDay[i].completions > 0) {
+      runningStreak++;
+      if (runningStreak > maxStreak) maxStreak = runningStreak;
+    } else {
+      runningStreak = 0;
+    }
+  }
+
+  // Current streak: consecutive days ending today (or yesterday if today not yet logged)
+  let currentStreak = 0;
+  let streakStart = lastRelevantDay;
+  if (
+    isCurrentMonth &&
+    lastRelevantDay >= 1 &&
+    completionsPerDay[lastRelevantDay - 1].completions === 0
+  ) {
+    // Grace: today hasn't been logged yet, start counting from yesterday
+    streakStart = lastRelevantDay - 1;
+  }
+  for (let day = streakStart; day >= 1; day--) {
+    if (completionsPerDay[day - 1].completions > 0) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
 
   const completionRate = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
 
@@ -603,7 +648,7 @@ export default function HabitTracker() {
               {/* Editor Area */}
               <div className="flex-1 p-8 md:p-12 flex flex-col bg-[#fdfbf7]">
                 <textarea
-                  value={dashboard?.notes || ''}
+                  value={localNotes}
                   onChange={handleNotesChange}
                   placeholder="What's on your mind? Reflect on your habits, note your dreams, or just brain dump..."
                   className="flex-1 w-full bg-transparent border-none focus:ring-0 outline-none resize-none text-gray-800 text-xl md:text-2xl leading-relaxed placeholder-gray-300 font-serif"
