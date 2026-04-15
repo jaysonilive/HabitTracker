@@ -591,18 +591,17 @@ export default function HabitTracker() {
                             <div key={hour} className="flex h-12">
                               {Array.from({length: daysInMonth}, (_, dIndex) => {
                                 const isSelected = dashboard?.sleep[dIndex + 1] === hour;
+                                const dayHasValue = dashboard?.sleep[dIndex + 1] !== undefined;
                                 return (
                                   <div
                                     key={dIndex}
                                     className="w-12 flex-shrink-0 flex items-center justify-center cursor-pointer group"
                                     onClick={() => setSleep(dIndex + 1, hour)}
+                                    title={isSelected ? `Tap to remove ${hour}` : `Set ${hour}`}
                                   >
-                                    <div className={cn(
-                                      "w-4 h-4 rounded-full transition-all duration-300",
-                                      isSelected 
-                                        ? "bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] scale-100" 
-                                        : "bg-gray-700/50 scale-50 opacity-0 group-hover:opacity-100 group-hover:scale-100"
-                                    )} />
+                                    {isSelected && (
+                                      <div className="w-3.5 h-3.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
+                                    )}
                                   </div>
                                 )
                               })}
